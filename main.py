@@ -1,15 +1,22 @@
 import math
 from random import randint, random
 
+from abc import ABC, abstractmethod
+
 import tkinter as tk
 
-from gamelib import Sprite, GameApp, Text
+from gamelib import Sprite, GameApp, Text, KeyboardHandler
 
 from consts import *
 
-class SlowFruit(Sprite):
+class Fruits(Sprite):
+    @abstractmethod
+    def update(self):
+        pass
+
+class SlowFruit(Fruits):
     def __init__(self, app, x, y):
-        super().__init__(app, 'images/apple.png', x, y)
+        super().__init__(app, 'images/apple.gif', x, y)
 
         self.app = app
 
@@ -20,9 +27,9 @@ class SlowFruit(Sprite):
             self.to_be_deleted = True
 
 
-class FastFruit(Sprite):
+class FastFruit(Fruits):
     def __init__(self, app, x, y):
-        super().__init__(app, 'images/banana.png', x, y)
+        super().__init__(app, 'images/banana.gif', x, y)
 
         self.app = app
 
@@ -33,9 +40,9 @@ class FastFruit(Sprite):
             self.to_be_deleted = True
 
 
-class SlideFruit(Sprite):
+class SlideFruit(Fruits):
     def __init__(self, app, x, y):
-        super().__init__(app, 'images/cherry.png', x, y)
+        super().__init__(app, 'images/cherry.gif', x, y)
 
         self.app = app
         self.direction = randint(0,1)*2 - 1
@@ -48,9 +55,9 @@ class SlideFruit(Sprite):
             self.to_be_deleted = True
 
 
-class CurvyFruit(Sprite):
+class CurvyFruit(Fruits):
     def __init__(self, app, x, y):
-        super().__init__(app, 'images/pear.png', x, y)
+        super().__init__(app, 'images/pear.gif', x, y)
 
         self.app = app
         self.t = randint(0,360) * 2 * math.pi / 360
@@ -66,7 +73,7 @@ class CurvyFruit(Sprite):
 
 class Cat(Sprite):
     def __init__(self, app, x, y):
-        super().__init__(app, 'images/cat.png', x, y)
+        super().__init__(app, 'images/cat.gif', x, y)
 
         self.app = app
         self.direction = None
@@ -94,6 +101,14 @@ class CatGame(GameApp):
         self.score = 0
         self.score_text = Text(self, 'Score: 0', 100, 40)
         self.fruits = []
+        self.init_key_handlers()
+
+    def init_key_handlers(self):
+        key_pressed_handler = UpperKeyPressedHandler(self, self.cat)
+        self.key_pressed_handler = key_pressed_handler
+
+        key_released_handler = LowerKeyPressedHandler(self, self.cat)
+        self.key_released_handler = key_released_handler
 
     def update_score(self):
         self.score_text.set_text('Score: ' + str(self.score))
@@ -135,12 +150,32 @@ class CatGame(GameApp):
 
         self.fruits = self.update_and_filter_deleted(self.fruits)
 
-    def on_key_pressed(self, event):
+    # def on_key_pressed(self, event):
+    #     if event.keysym == 'Up':
+    #         self.cat.direction = CAT_UP
+    #     elif event.keysym == 'Down':
+    #         self.cat.direction = CAT_DOWN
+    
+class GameKeyboardHandler(KeyboardHandler):
+    def __init__(self,app, cat, successor=None):
+        super().__init__(successor)
+        self.app = app
+        self.cat = cat
+
+class UpperKeyPressedHandler(GameKeyboardHandler):
+    def handle(self, event):
+        # print('here')
         if event.keysym == 'Up':
             self.cat.direction = CAT_UP
-        elif event.keysym == 'Down':
+        else:                                     #
+            super().handle(event) 
+
+class LowerKeyPressedHandler(GameKeyboardHandler):
+    def handle(self, event):
+        if event.keysym == 'Down':
             self.cat.direction = CAT_DOWN
-    
+        else:                                     #
+            super().handle(event) 
 
 if __name__ == "__main__":
     root = tk.Tk()
